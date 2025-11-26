@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc; /* Off-White - Clean, Modern */
+  --foreground: #12101a;
+  --color-primary: #1e3a8a; /* Royal Blue - Trust, Luxury, Professionalism */
+  --color-secondary: #d97706; /* Gold - CTA Buttons, Highlights */
+  --color-surface: #f8fafc;
+  --color-muted: #6b7280;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(214, 179, 112, 0.08),
+      transparent 35%
+    ),
+    radial-gradient(circle at 80% 0%, rgba(31, 37, 68, 0.12), transparent 30%),
+    var(--color-surface);
+  color: var(--foreground);
+  font-family: var(--font-primary), system-ui, -apple-system, sans-serif;
+}
+
+h1,
+h2,
+h3,
+.heading-font {
+  font-family: var(--font-heading), "Times New Roman", serif;
+  letter-spacing: -0.02em;
+}

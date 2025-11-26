@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  database:
+    image: postgres:15
+    container_name: amyhotel_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: directus
+      POSTGRES_USER: directus
+      POSTGRES_PASSWORD: directus
+    volumes:
+      - ./directus/database:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  cache:
+    image: redis:6
+    container_name: amyhotel_redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+
+  directus:
+    image: directus/directus:latest
+    container_name: amyhotel_directus
+    restart: unless-stopped
+    depends_on:
+      - database
+      - cache
+    environment:
+      KEY: changeme-key
+      SECRET: changeme-secret
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: adminpassword
+      DB_CLIENT: pg
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_DATABASE: directus
+      DB_USER: directus
+      DB_PASSWORD: directus
+      REDIS_ENABLED: "true"
+      REDIS_HOST: cache
+      # CORS Configuration
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "true" # Allow all origins for development, or set to http://localhost:3000
+      CORS_METHODS: "GET,POST,PATCH,DELETE,OPTIONS"
+      CORS_HEADERS: "Content-Type,Authorization,Range"
+      CORS_EXPOSED_HEADERS: "Content-Range"
+    ports:
+      - "8055:8055"
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+
+volumes:
+  postgres_data:
+  directus_uploads:
+  directus_extensions:
