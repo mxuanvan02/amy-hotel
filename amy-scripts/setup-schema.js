@@ -5,6 +5,8 @@ import {
   createCollection,
   createField,
   deleteCollection,
+  createRelation,
+  updateField,
 } from "@directus/sdk";
 import "dotenv/config";
 
@@ -20,6 +22,13 @@ const client = createDirectus(DIRECTUS_URL)
 
 // 1. Các trường hệ thống (Dùng chung cho các bảng chính)
 const SYSTEM_FIELDS = [
+  {
+    field: "id",
+    type: "integer",
+    name: "ID",
+    meta: { hidden: false, interface: "input", readonly: true },
+    schema: { is_primary_key: true, has_auto_increment: true },
+  },
   {
     field: "date_created",
     type: "timestamp",
@@ -118,6 +127,37 @@ const SCHEMA = [
         type: "text",
         name: "Mô tả",
         meta: { interface: "input-rich-text-html" },
+      },
+      {
+        field: "images",
+        type: "alias",
+        name: "Hình ảnh",
+        meta: { interface: "files", special: ["files"] },
+      },
+    ],
+  },
+  // --- JUNCTION TABLE: branches_files ---
+  {
+    collection: "branches_files",
+    name: "Branches Files",
+    icon: "import_export",
+    hidden: true,
+    fields: [
+      {
+        field: "id",
+        type: "integer",
+        meta: { hidden: false },
+        schema: { is_primary_key: true, has_auto_increment: true },
+      },
+      {
+        field: "branches_id",
+        type: "integer",
+        meta: { hidden: false },
+      },
+      {
+        field: "directus_files_id",
+        type: "uuid",
+        meta: { hidden: false },
       },
     ],
   },
@@ -252,6 +292,40 @@ const SCHEMA = [
           foreign_key_table: "branches",
           on_delete: "CASCADE",
         },
+      },
+      {
+        field: "images",
+        type: "alias", // Using alias for M2M files usually, or let's check how Directus handles 'files' field creation via SDK.
+        // Actually, creating a field of type 'files' (alias) is the standard way for "Many Files".
+        // But we need the relation too. createField with type 'alias' and special 'files' is what the UI does.
+        // Let's use the same config as I planned for branches.
+        name: "Hình ảnh",
+        meta: { interface: "files", special: ["files"] },
+      },
+    ],
+  },
+  // --- JUNCTION TABLE: room_types_files ---
+  {
+    collection: "room_types_files",
+    name: "Room Types Files",
+    icon: "import_export",
+    hidden: true,
+    fields: [
+      {
+        field: "id",
+        type: "integer",
+        meta: { hidden: false },
+        schema: { is_primary_key: true, has_auto_increment: true },
+      },
+      {
+        field: "room_types_id",
+        type: "integer",
+        meta: { hidden: false },
+      },
+      {
+        field: "directus_files_id",
+        type: "uuid",
+        meta: { hidden: false },
       },
     ],
   },
@@ -408,6 +482,12 @@ const SCHEMA = [
     fields: [
       // --- FIX: Thêm đầy đủ System Fields để không bị lỗi archive_field ---
       {
+        field: "id",
+        type: "integer",
+        meta: { hidden: true },
+        schema: { is_primary_key: true, has_auto_increment: true },
+      },
+      {
         field: "date_created",
         type: "timestamp",
         name: "Ngày tạo",
@@ -474,7 +554,14 @@ async function main() {
   try {
     // --- STEP 0: CLEANUP (XÓA CŨ) ---
     console.log("\n🗑  BƯỚC 1: DỌN DẸP DỮ LIỆU CŨ...");
-    const deleteOrder = ["booking_items", "bookings", "room_types", "branches"];
+    const deleteOrder = [
+      "booking_items",
+      "bookings",
+      "room_types_files",
+      "branches_files",
+      "room_types",
+      "branches",
+    ];
 
     for (const col of deleteOrder) {
       try {
@@ -500,17 +587,24 @@ async function main() {
       console.log(`\n📦 Đang xử lý bảng: ${table.collection}...`);
 
       // 1. Tạo Collection
+      const meta = {
+        icon: table.icon,
+        note: table.name,
+        sort_field: table.sort_field,
+      };
+
+      // Chỉ thêm archive_field nếu bảng có trường status
+      const hasStatus = table.fields.some((f) => f.field === "status");
+      if (hasStatus) {
+        meta.archive_field = "status";
+        meta.archive_value = "archived";
+        meta.unarchive_value = "published";
+      }
+
       await client.request(
         createCollection({
           collection: table.collection,
-          meta: {
-            icon: table.icon,
-            note: table.name,
-            sort_field: table.sort_field,
-            archive_field: "status", // Cần field 'status' để hoạt động
-            archive_value: "archived",
-            unarchive_value: "published",
-          },
+          meta: meta,
           schema: {},
         })
       );
@@ -532,8 +626,105 @@ async function main() {
           );
           console.log(`      + Field: ${fieldData.field}`);
         } catch (e) {
-          console.error(`      ❌ Lỗi field ${fieldData.field}:`, e.message);
+          // Ignore if field already exists (e.g. 'id' created by default)
+          if (
+            e?.response?.status === 400 &&
+            e?.errors?.[0]?.message?.includes("already exists")
+          ) {
+            console.log(
+              `      ✓ Field ${fieldData.field} already exists. Updating...`
+            );
+            try {
+              await client.request(
+                updateField(table.collection, fieldData.field, {
+                  type: fieldData.type,
+                  schema: fieldData.schema,
+                  meta: {
+                    ...fieldData.meta,
+                    note: fieldData.name,
+                  },
+                })
+              );
+              console.log(`      ✓ Updated field ${fieldData.field}`);
+            } catch (updateError) {
+              console.error(
+                `      ❌ Failed to update field ${fieldData.field}:`,
+                updateError.message
+              );
+            }
+          } else {
+            console.error(`      ❌ Lỗi field ${fieldData.field}:`, e.message);
+          }
         }
+      }
+    }
+
+    // --- STEP 2: CREATE RELATIONS (M2M Images) ---
+    console.log("\n🔗  BƯỚC 3: TẠO RELATIONS CHO ẢNH...");
+
+    const RELATIONS = [
+      // Branches Images
+      {
+        collection: "branches_files",
+        field: "branches_id",
+        related_collection: "branches",
+        schema: { on_delete: "CASCADE" },
+        meta: {
+          junction_field: "directus_files_id",
+          many_collection: "branches_files",
+          many_field: "branches_id",
+          one_collection: "branches",
+          one_field: "images",
+        },
+      },
+      {
+        collection: "branches_files",
+        field: "directus_files_id",
+        related_collection: "directus_files",
+        schema: { on_delete: "CASCADE" },
+        meta: {
+          junction_field: "branches_id",
+          many_collection: "directus_files",
+          one_collection: "branches_files",
+          one_field: "directus_files_id",
+        },
+      },
+      // Room Types Images
+      {
+        collection: "room_types_files",
+        field: "room_types_id",
+        related_collection: "room_types",
+        schema: { on_delete: "CASCADE" },
+        meta: {
+          junction_field: "directus_files_id",
+          many_collection: "room_types_files",
+          many_field: "room_types_id",
+          one_collection: "room_types",
+          one_field: "images",
+        },
+      },
+      {
+        collection: "room_types_files",
+        field: "directus_files_id",
+        related_collection: "directus_files",
+        schema: { on_delete: "CASCADE" },
+        meta: {
+          junction_field: "room_types_id",
+          many_collection: "directus_files",
+          one_collection: "room_types_files",
+          one_field: "directus_files_id",
+        },
+      },
+    ];
+
+    for (const rel of RELATIONS) {
+      try {
+        await client.request(createRelation(rel));
+        console.log(
+          `   🔗 Relation: ${rel.collection}.${rel.field} -> ${rel.related_collection}`
+        );
+      } catch (e) {
+        console.log(`   ⚠️ Relation exists or error: ${e.message}`);
       }
     }
 

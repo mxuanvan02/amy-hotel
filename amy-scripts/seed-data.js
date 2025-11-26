@@ -5,6 +5,8 @@ import {
   createItem,
   deleteItems,
   readItems,
+  importFile,
+  updateItem,
 } from "@directus/sdk";
 import "dotenv/config";
 
@@ -74,60 +76,80 @@ const LOCATIONS = [
     address: "123 Đường Lê Lợi, Phú Nhuận",
     type: "Premium",
     description: "Khách sạn cao cấp tại trung tâm thành phố với view toàn cảnh",
+    image_url:
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Imperial Heritage",
     address: "45 Đường Lê Duẩn, Thuận Thành",
     type: "Heritage",
     description: "Nằm gần Hoàng Thành Huế, kiến trúc cổ kính sang trọng",
+    image_url:
+      "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Riverside Boutique",
     address: "78 Đường Lê Lợi, Vĩnh Ninh",
     type: "Boutique",
     description: "Khách sạn boutique view sông Hương thơ mộng",
+    image_url:
+      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Garden Oasis Resort",
     address: "Km 5 Thủy Biều, Hương Thủy",
     type: "Resort",
     description: "Resort nghỉ dưỡng ven sông, không gian xanh mát",
+    image_url:
+      "https://images.unsplash.com/photo-1571896349842-6e53ce41be03?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Beachfront Paradise",
     address: "234 Biển Thuận An, Phú Vang",
     type: "Beach",
     description: "Resort bãi biển với view biển tuyệt đẹp",
+    image_url:
+      "https://images.unsplash.com/photo-1437719417032-8595fd9e9dc6?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Downtown Business",
     address: "567 Đường Hùng Vương, Phú Hội",
     type: "Business",
     description: "Khách sạn business class, gần trung tâm hành chính",
+    image_url:
+      "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Old Quarter Charm",
     address: "89 Đường Võ Thị Sáu, Phú Hội",
     type: "Boutique",
     description: "Khách sạn nhỏ xinh giữa lòng phố cổ",
+    image_url:
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Lagoon View Resort",
     address: "Đầm Chuồn, Phú Lộc",
     type: "Resort",
     description: "View đầm phá tuyệt đẹp, yên tĩnh riêng tư",
+    image_url:
+      "https://images.unsplash.com/photo-1561501900-3701fa6a0864?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Mountain Retreat",
     address: "Bạch Mã, Nam Đông",
     type: "Mountain",
     description: "Retreat trên núi, không khí trong lành",
+    image_url:
+      "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Luxury Palace",
     address: "999 Đường Nguyễn Huệ, Vĩnh Ninh",
     type: "Luxury",
     description: "Khách sạn 5 sao đẳng cấp quốc tế",
+    image_url:
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
   },
 ];
 
@@ -139,6 +161,8 @@ const ROOM_TEMPLATES = [
     bed: "queen",
     amenities: ["wifi", "tv", "ac"],
     view: "city_view",
+    image_url:
+      "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Standard Twin",
@@ -147,6 +171,8 @@ const ROOM_TEMPLATES = [
     bed: "twin",
     amenities: ["wifi", "tv", "ac"],
     view: "city_view",
+    image_url:
+      "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Superior Double",
@@ -155,6 +181,8 @@ const ROOM_TEMPLATES = [
     bed: "king",
     amenities: ["wifi", "tv", "ac", "minibar"],
     view: "city_view",
+    image_url:
+      "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Superior River View",
@@ -163,6 +191,8 @@ const ROOM_TEMPLATES = [
     bed: "king",
     amenities: ["wifi", "tv", "ac", "minibar", "balcony"],
     view: "river_view",
+    image_url:
+      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Deluxe City View",
@@ -171,6 +201,8 @@ const ROOM_TEMPLATES = [
     bed: "king",
     amenities: ["wifi", "tv", "ac", "minibar", "desk", "safe"],
     view: "city_view",
+    image_url:
+      "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Deluxe Ocean View",
@@ -179,6 +211,8 @@ const ROOM_TEMPLATES = [
     bed: "king",
     amenities: ["wifi", "tv", "ac", "minibar", "balcony", "bathtub"],
     view: "sea_view",
+    image_url:
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Executive Suite",
@@ -196,6 +230,8 @@ const ROOM_TEMPLATES = [
       "desk",
     ],
     view: "city_view",
+    image_url:
+      "https://images.unsplash.com/photo-1631049552057-403cdb8f0658?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Family Suite",
@@ -214,6 +250,8 @@ const ROOM_TEMPLATES = [
       "hairdryer",
     ],
     view: "garden_view",
+    image_url:
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80",
   },
   {
     name: "Presidential Suite",
@@ -233,6 +271,8 @@ const ROOM_TEMPLATES = [
       "scenic_view",
     ],
     view: "sea_view",
+    image_url:
+      "https://images.unsplash.com/photo-1631049035182-249067d7618e?auto=format&fit=crop&w=800&q=80",
   },
 ];
 
@@ -256,6 +296,21 @@ function generateBookingCode(index, date) {
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
   const sequence = String(index + 1).padStart(4, "0");
   return `AMY-${dateStr}-${sequence}`;
+}
+
+// --- HELPER: UPLOAD IMAGE ---
+async function uploadImage(url, title) {
+  try {
+    const file = await client.request(
+      importFile(url, {
+        title: title,
+      })
+    );
+    return file.id;
+  } catch (error) {
+    console.warn(`   ⚠️ Could not upload image for ${title}:`, error.message);
+    return null;
+  }
 }
 
 async function main() {
@@ -318,20 +373,48 @@ async function main() {
 
     for (let i = 0; i < LOCATIONS.length; i++) {
       const loc = LOCATIONS[i];
+
+      // Upload image for branch
+      let imageId = null;
+      if (loc.image_url) {
+        console.log(`   Uploading image for branch: ${loc.name}...`);
+        imageId = await uploadImage(loc.image_url, `Branch - ${loc.name}`);
+      }
+
       const branch = await client.request(
-        createItem("branches", {
-          status: "published",
-          name: `Amy Hotel ${loc.name}`,
-          slug: `amy-${loc.name.toLowerCase().replace(/ /g, "-")}`,
-          address: `${loc.address}, Thừa Thiên Huế`,
-          phone: `0234 3${i}${i}0 ${i}00`,
-          map_url: `https://maps.google.com/?q=Amy+Hotel+${loc.name.replace(
-            / /g,
-            "+"
-          )}`,
-          description: `<p><strong>Amy Hotel ${loc.name}</strong></p><p>${loc.description}</p><p>Tiện nghi cao cấp, phục vụ chu đáo, vị trí đắc địa.</p>`,
-        })
+        createItem(
+          "branches",
+          {
+            status: "published",
+            name: `Amy Hotel ${loc.name}`,
+            slug: `amy-${loc.name.toLowerCase().replace(/ /g, "-")}`,
+            address: `${loc.address}, Thừa Thiên Huế`,
+            phone: `0234 3${i}${i}0 ${i}00`,
+            map_url: `https://maps.google.com/?q=Amy+Hotel+${loc.name.replace(
+              / /g,
+              "+"
+            )}`,
+            description: `<p><strong>Amy Hotel ${loc.name}</strong></p><p>${loc.description}</p><p>Tiện nghi cao cấp, phục vụ chu đáo, vị trí đắc địa.</p>`,
+          },
+          {
+            fields: ["id", "name"],
+          }
+        )
       );
+
+      if (imageId) {
+        try {
+          await client.request(
+            createItem("branches_files", {
+              branches_id: branch.id,
+              directus_files_id: imageId,
+            })
+          );
+          console.log(`      + Linked image to branch ${branch.name}`);
+        } catch (e) {
+          console.warn(`      ⚠️ Could not link image to branch: ${e.message}`);
+        }
+      }
 
       // Mỗi branch có 5-6 loại phòng
       const numRoomTypes = 5 + Math.floor(Math.random() * 2);
@@ -340,27 +423,54 @@ async function main() {
       ).slice(0, numRoomTypes);
 
       for (const tpl of selectedTemplates) {
+        // Upload image for room
+        let roomImageId = null;
+        if (tpl.image_url) {
+          // Randomize image slightly to avoid duplicates if needed, or just reuse
+          roomImageId = await uploadImage(tpl.image_url, `Room - ${tpl.name}`);
+        }
+
         const room = await client.request(
-          createItem("room_types", {
-            status: "published",
-            branch_id: branch.id,
-            name: tpl.name,
-            slug: `${tpl.name.toLowerCase().replace(/ /g, "-")}-branch${
-              branch.id
-            }`,
-            price_base: tpl.price,
-            inventory_count: Math.floor(Math.random() * 5) + 3, // 3-7 phòng
-            capacity_adults: 2,
-            capacity_children: tpl.name.includes("Family") ? 2 : 1,
-            size_sqm: tpl.size,
-            bed_type: tpl.bed,
-            view_type:
-              tpl.view ||
-              VIEW_TYPES[Math.floor(Math.random() * VIEW_TYPES.length)],
-            amenities: tpl.amenities,
-            description: `<p>Phòng ${tpl.name} rộng ${tpl.size}m² với đầy đủ tiện nghi cao cấp.</p>`,
-          })
+          createItem(
+            "room_types",
+            {
+              status: "published",
+              branch_id: branch.id,
+              name: tpl.name,
+              slug: `${tpl.name.toLowerCase().replace(/ /g, "-")}-branch${
+                branch.id
+              }`,
+              price_base: tpl.price,
+              inventory_count: Math.floor(Math.random() * 5) + 3, // 3-7 phòng
+              capacity_adults: 2,
+              capacity_children: tpl.name.includes("Family") ? 2 : 1,
+              size_sqm: tpl.size,
+              bed_type: tpl.bed,
+              view_type:
+                tpl.view ||
+                VIEW_TYPES[Math.floor(Math.random() * VIEW_TYPES.length)],
+              amenities: tpl.amenities,
+              description: `<p>Phòng ${tpl.name} rộng ${tpl.size}m² với đầy đủ tiện nghi cao cấp.</p>`,
+            },
+            {
+              fields: ["id", "name", "price_base"],
+            }
+          )
         );
+
+        if (roomImageId) {
+          try {
+            await client.request(
+              createItem("room_types_files", {
+                room_types_id: room.id,
+                directus_files_id: roomImageId,
+              })
+            );
+          } catch (e) {
+            console.warn(`      ⚠️ Could not link image to room: ${e.message}`);
+          }
+        }
+
         allRooms.push(room);
       }
     }
