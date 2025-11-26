@@ -20,7 +20,7 @@ export const BranchService = {
           filter: {
             status: { _eq: DataStatus.PUBLISHED },
           },
-          fields: ["*"],
+          fields: ["*", "images.directus_files_id.*"],
         })
       );
       return (data ?? []) as Branch[];
@@ -52,7 +52,7 @@ export const BranchService = {
             status: { _eq: DataStatus.PUBLISHED },
           },
           limit: 1,
-          fields: ["*"],
+          fields: ["*", "images.directus_files_id.*"],
         })
       );
       return (data?.[0] ?? null) as Branch | null;

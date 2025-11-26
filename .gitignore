@@ -29,6 +29,7 @@ ts-debug.log*
 .env.test.local
 .env.production.local
 
+
 # Directus
 directus/uploads
 directus/database

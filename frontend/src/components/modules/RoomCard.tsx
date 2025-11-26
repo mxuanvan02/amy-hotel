@@ -102,7 +102,9 @@ export function RoomCard({ room, assetsBase, onSelect }: RoomCardProps) {
     room.images && Array.isArray(room.images) && room.images[0]
       ? typeof room.images[0] === "string"
         ? room.images[0]
-        : room.images[0].id
+        : typeof room.images[0].directus_files_id === "object"
+        ? room.images[0].directus_files_id.id
+        : room.images[0].directus_files_id
       : null;
 
   const cover = coverId ? `${assetsBase}/${coverId}` : fallbackImage;

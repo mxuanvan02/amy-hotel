@@ -39,7 +39,9 @@ export default async function BranchDetailPage({
     branch.images && Array.isArray(branch.images) && branch.images[0]
       ? typeof branch.images[0] === "string"
         ? branch.images[0]
-        : branch.images[0].id
+        : typeof branch.images[0].directus_files_id === "object"
+        ? branch.images[0].directus_files_id.id
+        : branch.images[0].directus_files_id
       : null;
 
   const coverImage = coverId ? `${ASSETS_URL}/${coverId}` : null;

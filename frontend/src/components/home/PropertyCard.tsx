@@ -17,7 +17,9 @@ export function PropertyCard({ location, assetsBase }: PropertyCardProps) {
     location.images && location.images[0]
       ? typeof location.images[0] === "string"
         ? location.images[0]
-        : location.images[0].id
+        : typeof location.images[0].directus_files_id === "object"
+        ? location.images[0].directus_files_id.id
+        : location.images[0].directus_files_id
       : null;
 
   const cover = coverId ? `${assetsBase}/${coverId}` : fallbackImage;

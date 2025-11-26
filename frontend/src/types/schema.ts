@@ -44,6 +44,11 @@ export interface DirectusFile {
   url?: string; // Computed field
 }
 
+// 3b. M2M File Interface (Junction Table)
+export interface M2MFile {
+  directus_files_id: DirectusFile | string;
+}
+
 // 4. Domain Interfaces (Mapped 1:1 with Schema v8.0)
 
 export interface Branch extends BaseEntity {
@@ -54,7 +59,7 @@ export interface Branch extends BaseEntity {
   address: string;
   phone: string;
   map_url?: string;
-  images?: string[] | DirectusFile[]; // Union type to handle expansion
+  images?: M2MFile[] | string[]; // Updated for M2M
   description?: string; // HTML format
 }
 
@@ -72,7 +77,7 @@ export interface RoomType extends BaseEntity {
   view_type?: "sea_view" | "river_view" | "city_view" | "garden_view" | "no_window"; // View type
   amenities?: string[]; // Array of amenity codes: ['wifi', 'tv', 'ac', ...]
   description?: string; // HTML format
-  images?: string[] | DirectusFile[]; // Room images
+  images?: M2MFile[] | string[]; // Updated for M2M
   branch_id: number | Branch;
 }
 
